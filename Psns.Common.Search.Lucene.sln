@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EE2E4EEC-4D02-4736-AF1C-BF46F4DF3CFC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{1EDF35E7-BCAC-4086-B272-311A60F9038F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Psns.Common.Search.Lucene", "Psns.Common.Search.Lucene\Psns.Common.Search.Lucene.csproj", "{08388279-8382-4833-8D46-AA51BDA36EB1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchUnitTests", "SearchUnitTests\SearchUnitTests.csproj", "{38FF930E-4AA2-436E-AFB7-B393E798F385}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FA1F2DAA-60EC-45C4-8AAE-09DCB4A06F6D}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.md = LICENSE.md
+		Psns.Common.Search.Lucene.nuspec = Psns.Common.Search.Lucene.nuspec
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{08388279-8382-4833-8D46-AA51BDA36EB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08388279-8382-4833-8D46-AA51BDA36EB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08388279-8382-4833-8D46-AA51BDA36EB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08388279-8382-4833-8D46-AA51BDA36EB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38FF930E-4AA2-436E-AFB7-B393E798F385}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38FF930E-4AA2-436E-AFB7-B393E798F385}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38FF930E-4AA2-436E-AFB7-B393E798F385}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38FF930E-4AA2-436E-AFB7-B393E798F385}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{08388279-8382-4833-8D46-AA51BDA36EB1} = {EE2E4EEC-4D02-4736-AF1C-BF46F4DF3CFC}
+		{38FF930E-4AA2-436E-AFB7-B393E798F385} = {1EDF35E7-BCAC-4086-B272-311A60F9038F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		EnterpriseLibraryConfigurationToolBinariesPath = packages\Unity.2.1.505.0\lib\NET35;packages\Unity.Interception.2.1.505.0\lib\NET35;packages\EnterpriseLibrary.Common.5.0.505.0\lib\NET35;packages\EnterpriseLibrary.Logging.5.0.505.1\lib\NET35
+	EndGlobalSection
+EndGlobal

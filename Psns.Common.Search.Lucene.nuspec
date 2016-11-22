@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Psns.Common.Search.Lucene</id>
+    <title>Psns.Common.Search.Lucene</title>
+    <authors>PSNS</authors>
+    <owners>109.14</owners>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description></description>
+    <projectUrl>https://github.com/PSNS-IMF/search-lucene</projectUrl>
+    <licenseUrl>https://github.com/PSNS-IMF/search-lucene/blob/master/LICENSE.md</licenseUrl>
+    <releaseNotes>
+      ## 1.0.0.0
+      ### Features
+      * Initial release
+    </releaseNotes>
+    <version>$version$</version>
+    <tags>PSNS Lucene Search</tags>
+    <dependencies>
+      <dependency id="Lucene.Net" version="3.0.3" />
+      <dependency id="LanguageExt.Core" version="1.9.7" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="Psns.Common.Search.Lucene\bin\$configuration$\Psns.Common.Search.Lucene.*" target="lib\net45\" exclude="**\*.dll.config;**\*Tests*;**\*Test*" />
+  </files>
+</package>
