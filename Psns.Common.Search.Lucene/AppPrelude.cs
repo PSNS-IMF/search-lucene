@@ -15,42 +15,47 @@ using static LanguageExt.Prelude;
 
 namespace Psns.Common.Search.Lucene
 {
-    public static class AppPrelude
+    public static partial class AppPrelude
     {
-        public delegate Either<Exception, Directory> withLuceneIndexWriterFunc(string directory, Action<IndexWriter> action);
+        public delegate Either<Exception, Directory> withIndexWriterFunc(
+            string directory, 
+            Action<IIndexWriter> action);
 
-        internal static Either<Exception, Directory> withLuceneIndexWriter(string directory, Action<IndexWriter> action)
-        {
-            BooleanQuery.MaxClauseCount = 4096;
-            Cryptography.FIPSCompliant = true;
-
-            return match(
+        internal static Either<Exception, Directory> withIndexWriter(
+            string directory,
+            Func<IIndexWriter> writerFactory,
+            Action<IIndexWriter> action) =>
+            match(
                 tryuse(
-                    new IndexWriter(FSDirectory.Open(directory), new LowerCaseKeyWordAnalyzer(), IndexWriter.MaxFieldLength.UNLIMITED),
+                    writerFactory(),
                     writer => { action(writer); return writer.Directory; }),
                 Succ: dir => Right<Exception, Directory>(dir),
                 Fail: ex => ex);
-        }
 
         public static IEnumerable<IEnumerable<Document>> mapItems<T>(IEnumerable<T> items, Func<T, Document> mapItem) =>
             map(items, mapItem).Chunk();
 
-        public static Either<Exception, Directory> subIndex(string directory, IEnumerable<Document> documents, withLuceneIndexWriterFunc withWriter) =>
-            withWriter(
-                directory,
-                writer => 
-                    iter(
-                        documents,
-                        doc => writer.AddDocument(doc)));
+        public static Either<Exception, Directory> subIndex(string directory,
+            IEnumerable<IEnumerable<Document>> documentChunks,
+            withIndexWriterFunc withIndexWriter) =>
+            withIndexWriter(directory, writer =>
+                iter(
+                    documentChunks,
+                    documents =>
+                        iter(
+                            documents,
+                            doc => writer.AddDocument(doc))));
 
-        public static void mergeIndexes(string directory, IEnumerable<Directory> indexes, withLuceneIndexWriterFunc withWriter)
-        {
+
+        public static Either<Exception, Directory> mergeIndexes(
+            string directory, 
+            IEnumerable<Directory> indexes, 
+            withIndexWriterFunc withWriter) =>
             withWriter(
                 directory,
                 writer =>
                     iter(
                         indexes,
                         index => writer.AddIndexesNoOptimize(index)));
-        }
     }
 }

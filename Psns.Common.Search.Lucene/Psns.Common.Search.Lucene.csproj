@@ -105,6 +105,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppPrelude.cs" />
+    <Compile Include="Compose.cs" />
+    <Compile Include="IIndexWriter.cs" />
     <Compile Include="LowerCaseKeyWordAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
