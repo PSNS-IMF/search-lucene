@@ -108,6 +108,7 @@
     <Compile Include="Compose.cs" />
     <Compile Include="IIndexWriter.cs" />
     <Compile Include="LowerCaseKeyWordAnalyzer.cs" />
+    <Compile Include="LuceneIndexWriter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
