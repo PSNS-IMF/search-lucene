@@ -37,29 +37,29 @@ namespace Psns.Common.Search.Lucene
         /// <param name="items"></param>
         /// <param name="mapItem"></param>
         /// <returns></returns>
-        public static IEnumerable<IEnumerable<Document>> mapItems<T>(IEnumerable<T> items, Func<T, Document> mapItem) =>
+        public static IEnumerable<IEnumerable<Tuple<T, Document>>> mapItems<T>(IEnumerable<T> items, Func<T, Tuple<T, Document>> mapItem) =>
             map(items, mapItem).Chunk();
 
         /// <summary>
         /// Index and commit documents
         /// </summary>
-        /// <param name="documentChunks"></param>
+        /// <param name="itemDocumentChunks"></param>
         /// <param name="termFactory"></param>
         /// <param name="withIndexWriter"></param>
         /// <returns></returns>
-        public static Either<Exception, Directory> index(
-            IEnumerable<IEnumerable<Document>> documentChunks,
-            Func<Document, Term> termFactory,
+        public static Either<Exception, Directory> index<T>(
+            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            Func<Tuple<T, Document>, Term> termFactory,
             Func<Action<IIndexWriter>, Either<Exception, Directory>> withIndexWriter) =>
             withIndexWriter(
                 writer =>
                 iter(
-                    documentChunks,
-                    documents =>
+                    itemDocumentChunks,
+                    itemDocuments =>
                     {
                         iter(
-                            documents,
-                            doc => writer.UpdateDocument(termFactory(doc), doc));
+                            itemDocuments,
+                            itemDoc => writer.UpdateDocument(termFactory(itemDoc), itemDoc.Item2));
 
                         writer.Commit();
                     }));

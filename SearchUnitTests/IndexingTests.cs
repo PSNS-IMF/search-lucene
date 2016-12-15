@@ -17,7 +17,7 @@ namespace SearchUnitTests
         [Test]
         public void MapItems_AppliesMappingFunctionAndChunks()
         {
-            var documentChunks = mapItems(Range(1, 1000), i => new Document());
+            var documentChunks = mapItems(Range(1, 1000), i => Tuple(i, new Document()));
 
             Expect(documentChunks.Count(), EqualTo(2));
 
@@ -58,7 +58,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
 
             var result = index(
-                List(List(new Document())),
+                List(List(Tuple(1, new Document()))),
                 doc => new Term("Id"),
                 action => { action(mockWriter.Object); return new RAMDirectory(); });
 
