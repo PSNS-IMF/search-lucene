@@ -63,7 +63,6 @@ namespace SearchUnitTests
                 action => { action(mockWriter.Object); return new RAMDirectory(); });
 
             mockWriter.Verify(w => w.UpdateDocument(It.Is<Term>(t => t.Field == "Id"), It.IsAny<Document>()), Times.Once());
-            mockWriter.Verify(w => w.Commit(), Times.Once());
         }
     }
 }

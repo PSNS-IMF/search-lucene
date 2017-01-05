@@ -40,6 +40,11 @@ namespace Psns.Common.Search.Lucene
         public static IEnumerable<IEnumerable<Tuple<T, Document>>> mapItems<T>(IEnumerable<T> items, Func<T, Tuple<T, Document>> mapItem) =>
             map(items, mapItem).Chunk();
 
+        /*
+         * very no explicit optimize or commit
+         * find best merge policy
+         */
+
         /// <summary>
         /// Index and commit documents
         /// </summary>
@@ -60,8 +65,6 @@ namespace Psns.Common.Search.Lucene
                         iter(
                             itemDocuments,
                             itemDoc => writer.UpdateDocument(termFactory(itemDoc), itemDoc.Item2));
-
-                        writer.Commit();
                     }));
     }
 }

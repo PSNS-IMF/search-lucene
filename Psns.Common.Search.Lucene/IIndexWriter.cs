@@ -12,6 +12,8 @@ namespace Psns.Common.Search.Lucene
         /// </summary>
         Directory Directory { get; }
 
+        int MergeFactor { get; set; }
+
         /// <summary>
         /// Remove and re-index a Document
         /// </summary>
@@ -19,15 +21,8 @@ namespace Psns.Common.Search.Lucene
         /// <param name="doc"></param>
         void UpdateDocument(Term term, Document doc);
 
-        /// <summary>
-        /// Commit changes to the index
-        /// </summary>
-        void Commit();
+        void Optimize();
 
-        /// <summary>
-        /// Merge in other indexes with no optimization for maximum speed
-        /// </summary>
-        /// <param name="dirs"></param>
-        void AddIndexesNoOptimize(params Directory[] dirs);
+        void DeleteAll();
     }
 }
