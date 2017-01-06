@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using LanguageExt;
+using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
-using Lucene.Net.Store;
 using Lucene.Net.Support;
 using static LanguageExt.Prelude;
 
@@ -27,7 +29,7 @@ namespace Psns.Common.Search.Lucene
             BooleanQuery.MaxClauseCount = 4096;
             Cryptography.FIPSCompliant = true;
 
-            return Unit.Default;
+            return unit;
         }
 
         /// <summary>
@@ -36,7 +38,23 @@ namespace Psns.Common.Search.Lucene
         /// <param name="directory"></param>
         /// <param name="useWriter"></param>
         /// <returns></returns>
-        public static Either<Exception, Directory> withLuceneIndexWriter(string directory, Action<IIndexWriter> useWriter) =>
-            withIndexWriter(fun(() => indexWriterFactory(directory)), directory, useWriter);
+        public static Either<Exception, T> tryWithLuceneIndexWriter<T>(string directory, Func<IIndexWriter, T> useWriter) =>
+            tryWithIndexWriter(fun(() => indexWriterFactory(directory)), directory, useWriter);
+
+        /// <summary>
+        /// Rebuild an index using a Lucene IndexWriter
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="itemDocumentChunks"></param>
+        /// <param name="termFactory"></param>
+        /// <returns></returns>
+        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync(
+            string directory,
+            IEnumerable<IEnumerable<Tuple<Unit, Document>>> itemDocumentChunks,
+            Func<Tuple<Unit, Document>, Term> termFactory) =>
+                await rebuildSearchIndexAsync(
+                    itemDocumentChunks, 
+                    fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, useWriter)), 
+                    termFactory);
     }
 }

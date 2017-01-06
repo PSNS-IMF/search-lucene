@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using LanguageExt;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
@@ -19,15 +21,15 @@ namespace Psns.Common.Search.Lucene
         /// <param name="directory"></param>
         /// <param name="action"></param>
         /// <returns></returns>
-        public static Either<Exception, Directory> withIndexWriter(
+        public static Either<Exception, Ret> tryWithIndexWriter<Ret>(
             Func<IIndexWriter> writerFactory,
             string directory,
-            Action<IIndexWriter> action) =>
+            Func<IIndexWriter, Ret> action) =>
             match(
                 tryuse(
                     writerFactory,
-                    writer => { action(writer); return writer.Directory; }),
-                Succ: dir => Right<Exception, Directory>(dir),
+                    writer => action(writer)),
+                Succ: ret => Right<Exception, Ret>(ret),
                 Fail: ex => ex);
 
         /// <summary>
@@ -39,11 +41,6 @@ namespace Psns.Common.Search.Lucene
         /// <returns></returns>
         public static IEnumerable<IEnumerable<Tuple<T, Document>>> mapItems<T>(IEnumerable<T> items, Func<T, Tuple<T, Document>> mapItem) =>
             map(items, mapItem).Chunk();
-
-        /*
-         * very no explicit optimize or commit
-         * find best merge policy
-         */
 
         /// <summary>
         /// Index and commit documents
@@ -65,6 +62,45 @@ namespace Psns.Common.Search.Lucene
                         iter(
                             itemDocuments,
                             itemDoc => writer.UpdateDocument(termFactory(itemDoc), itemDoc.Item2));
+                    }));
+
+        /// <summary>
+        /// Rebuild search index by using recommended strategy of using 
+        /// one index writer instance and multiple threads for optimal speed
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="itemDocumentChunks">Chunks of items that are evenly divided for thread pool processing</param>
+        /// <param name="withIndexWriter">IndexWriter factory. Best to leave writer MergeFactor as default (10).
+        /// Higher MergeFactors are better for batch indexing (>=10); lower for searching (less than 10)</param>
+        /// <param name="termFactory">Term generator</param>
+        /// <returns>Exception on fail; Unit on success</returns>
+        public static async Task<Either<Exception, Unit>> rebuildSearchIndexAsync<T>(
+            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter,
+            Func<Tuple<T, Document>, Term> termFactory) =>
+                await Task.Run(() => 
+                    withIndexWriter(writer =>
+                    {
+                        var threads = fold(
+                            itemDocumentChunks,
+                            List<Task>(),
+                            (state, itemDocuments) =>
+                                state = state.Add(
+                                    Task.Factory.StartNew(
+                                        (() =>
+                                            iter(
+                                                itemDocuments,
+                                                item => 
+                                                    writer.UpdateDocument(
+                                                        termFactory(item), 
+                                                        item.Item2))))));
+
+                        match(
+                            Try(() => { Task.WaitAll(threads.ToArray()); return unit; }),
+                            Succ: ut => writer.Optimize(),
+                            Fail: exception => raise<Exception>(exception));
+
+                        return unit;
                     }));
     }
 }

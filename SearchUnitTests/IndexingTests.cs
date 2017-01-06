@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
@@ -33,7 +35,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
             mockWriter.Setup(w => w.Directory).Returns(new RAMDirectory());
 
-            var result = withIndexWriter(() => mockWriter.Object, "directory", writer => { called = true; });
+            var result = tryWithIndexWriter(() => mockWriter.Object, "directory", writer => { called = true; return unit; });
 
             Expect(match(result, dir => "ok", ex => "failed"), Is.EqualTo("ok"));
             Expect(called, Is.True);
@@ -46,7 +48,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
             mockWriter.Setup(w => w.Directory).Returns(new RAMDirectory());
 
-            var result = withIndexWriter(() => failwith<IIndexWriter>("error"), "directory", writer => { called = true; });
+            var result = tryWithIndexWriter(() => failwith<IIndexWriter>("error"), "directory", writer => { called = true; return unit; });
 
             Expect(match(result, dir => "ok", ex => ex.Message), Is.EqualTo("error"));
             Expect(called, Is.False);
@@ -63,6 +65,61 @@ namespace SearchUnitTests
                 action => { action(mockWriter.Object); return new RAMDirectory(); });
 
             mockWriter.Verify(w => w.UpdateDocument(It.Is<Term>(t => t.Field == "Id"), It.IsAny<Document>()), Times.Once());
+        }
+
+        [Test]
+        public async Task RebuildSearchIndexAsync_UpdatesAllDocumentsAndCallsOptimize()
+        {
+            var mockIndexWriter = new Mock<IIndexWriter>();
+            var idDocs = List(Tuple(1, new Document()), Tuple(2, new Document()), Tuple(3, new Document()));
+
+            var result = await rebuildSearchIndexAsync(
+                List(idDocs),
+                action => { action(mockIndexWriter.Object); return unit; },
+                intDocument => new Term("Id", intDocument.Item1.ToString()));
+
+            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
+
+            mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
+            mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "2"), It.IsAny<Document>()), Times.Once());
+            mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "3"), It.IsAny<Document>()), Times.Once());
+            mockIndexWriter.Verify(w => w.Optimize(), Times.Once());
+        }
+
+        [Test]
+        public async Task RebuildSearchIndexAsync_UpdateThrows_ResultIsException()
+        {
+            var mockIndexWriter = new Mock<IIndexWriter>();
+            mockIndexWriter.Setup(w => w.UpdateDocument(It.IsAny<Term>(), It.IsAny<Document>())).Throws(new Exception("message"));
+
+            var idDocs = List(Tuple(1, new Document()));
+
+            var result = await rebuildSearchIndexAsync(
+                List(idDocs),
+                action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
+                intDocument => new Term("Id", intDocument.Item1.ToString()));
+
+            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
+
+            mockIndexWriter.Verify(w => w.Optimize(), Times.Never());
+        }
+
+        [Test]
+        public async Task RebuildSearchIndexAsync_OptimizeThrows_ResultIsException()
+        {
+            var mockIndexWriter = new Mock<IIndexWriter>();
+            mockIndexWriter.Setup(w => w.Optimize()).Throws(new Exception("message"));
+
+            var idDocs = List(Tuple(1, new Document()));
+
+            var result = await rebuildSearchIndexAsync(
+                List(idDocs),
+                action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
+                intDocument => new Term("Id", intDocument.Item1.ToString()));
+
+            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
+
+            mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
         }
     }
 }
