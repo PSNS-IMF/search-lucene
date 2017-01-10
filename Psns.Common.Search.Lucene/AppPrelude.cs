@@ -52,17 +52,21 @@ namespace Psns.Common.Search.Lucene
         public static Either<Exception, Directory> index<T>(
             IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
-            Func<Action<IIndexWriter>, Either<Exception, Directory>> withIndexWriter) =>
+            Func<Func<IIndexWriter, Directory>, Either<Exception, Directory>> withIndexWriter) =>
             withIndexWriter(
                 writer =>
-                iter(
-                    itemDocumentChunks,
-                    itemDocuments =>
-                    {
-                        iter(
-                            itemDocuments,
-                            itemDoc => writer.UpdateDocument(termFactory(itemDoc), itemDoc.Item2));
-                    }));
+                {
+                    iter(
+                        itemDocumentChunks,
+                        itemDocuments =>
+                        {
+                            iter(
+                                itemDocuments,
+                                itemDoc => writer.UpdateDocument(termFactory(itemDoc), itemDoc.Item2));
+                        });
+
+                    return writer.Directory;
+                });
 
         /// <summary>
         /// Rebuild search index by using recommended strategy of using 
