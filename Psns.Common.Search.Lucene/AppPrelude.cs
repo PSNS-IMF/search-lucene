@@ -86,6 +86,9 @@ namespace Psns.Common.Search.Lucene
                 await Task.Run(() => 
                     withIndexWriter(writer =>
                     {
+                        writer.DeleteAll();
+                        writer.Commit();
+
                         var threads = fold(
                             itemDocumentChunks,
                             List<Task>(),

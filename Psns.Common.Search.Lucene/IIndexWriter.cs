@@ -24,5 +24,7 @@ namespace Psns.Common.Search.Lucene
         void Optimize();
 
         void DeleteAll();
+
+        void Commit();
     }
 }

@@ -83,6 +83,8 @@ namespace SearchUnitTests
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
             Expect(callBackCount, Is.EqualTo(2));
 
+            mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
+            mockIndexWriter.Verify(w => w.Commit(), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "2"), It.IsAny<Document>()), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "3"), It.IsAny<Document>()), Times.Once());
@@ -105,6 +107,8 @@ namespace SearchUnitTests
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
 
+            mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
+            mockIndexWriter.Verify(w => w.Commit(), Times.Once());
             mockIndexWriter.Verify(w => w.Optimize(), Times.Never());
         }
 
@@ -124,6 +128,8 @@ namespace SearchUnitTests
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
 
+            mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
+            mockIndexWriter.Verify(w => w.Commit(), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
         }
     }
