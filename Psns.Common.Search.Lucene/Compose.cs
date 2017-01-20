@@ -48,10 +48,10 @@ namespace Psns.Common.Search.Lucene
         /// <param name="itemDocumentChunks"></param>
         /// <param name="termFactory"></param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync(
+        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             string directory,
-            IEnumerable<IEnumerable<Tuple<Unit, Document>>> itemDocumentChunks,
-            Func<Tuple<Unit, Document>, Term> termFactory) =>
+            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            Func<Tuple<T, Document>, Term> termFactory) =>
                 await rebuildSearchIndexAsync(
                     itemDocumentChunks, 
                     fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, useWriter)), 
