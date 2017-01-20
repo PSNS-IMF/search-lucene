@@ -72,13 +72,16 @@ namespace SearchUnitTests
         {
             var mockIndexWriter = new Mock<IIndexWriter>();
             var idDocs = List(Tuple(1, new Document()), Tuple(2, new Document()), Tuple(3, new Document()));
+            var callBackCount = 0;
 
             var result = await rebuildSearchIndexAsync(
-                List(idDocs),
+                List(idDocs, create<Tuple<int, Document>>()),
                 action => { action(mockIndexWriter.Object); return unit; },
-                intDocument => new Term("Id", intDocument.Item1.ToString()));
+                intDocument => new Term("Id", intDocument.Item1.ToString()),
+                () => callBackCount++);
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
+            Expect(callBackCount, Is.EqualTo(2));
 
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "2"), It.IsAny<Document>()), Times.Once());
@@ -97,7 +100,8 @@ namespace SearchUnitTests
             var result = await rebuildSearchIndexAsync(
                 List(idDocs),
                 action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
-                intDocument => new Term("Id", intDocument.Item1.ToString()));
+                intDocument => new Term("Id", intDocument.Item1.ToString()),
+                () => { });
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
 
@@ -115,7 +119,8 @@ namespace SearchUnitTests
             var result = await rebuildSearchIndexAsync(
                 List(idDocs),
                 action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
-                intDocument => new Term("Id", intDocument.Item1.ToString()));
+                intDocument => new Term("Id", intDocument.Item1.ToString()),
+                () => { });
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
 

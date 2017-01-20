@@ -81,7 +81,8 @@ namespace Psns.Common.Search.Lucene
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexAsync<T>(
             IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
             Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter,
-            Func<Tuple<T, Document>, Term> termFactory) =>
+            Func<Tuple<T, Document>, Term> termFactory,
+            Action chunkIndexedCallback) =>
                 await Task.Run(() => 
                     withIndexWriter(writer =>
                     {
@@ -92,12 +93,14 @@ namespace Psns.Common.Search.Lucene
                                 state = state.Add(
                                     Task.Factory.StartNew(
                                         (() =>
-                                            iter(
+                                            tee(
+                                                iter(
                                                 itemDocuments,
                                                 item => 
                                                     writer.UpdateDocument(
                                                         termFactory(item), 
-                                                        item.Item2))))));
+                                                        item.Item2)), 
+                                                unt => chunkIndexedCallback())))));
 
                         match(
                             Try(() => { Task.WaitAll(threads.ToArray()); return unit; }),
@@ -106,5 +109,11 @@ namespace Psns.Common.Search.Lucene
 
                         return unit;
                     }));
+
+        static R tee<R>(R val, Action<R> action)
+        {
+            action(val);
+            return val;
+        }
     }
 }
