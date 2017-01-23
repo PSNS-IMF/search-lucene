@@ -77,12 +77,14 @@ namespace Psns.Common.Search.Lucene
         /// <param name="withIndexWriter">IndexWriter factory. Best to leave writer MergeFactor as default (10).
         /// Higher MergeFactors are better for batch indexing (>=10); lower for searching (less than 10)</param>
         /// <param name="termFactory">Term generator</param>
+        /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
+        /// how many documents are in the chunk</param>
         /// <returns>Exception on fail; Unit on success</returns>
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexAsync<T>(
             IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
             Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter,
             Func<Tuple<T, Document>, Term> termFactory,
-            Action chunkIndexedCallback) =>
+            Action<int> chunkIndexedCallback) =>
                 await Task.Run(() => 
                     withIndexWriter(writer =>
                     {
@@ -103,7 +105,7 @@ namespace Psns.Common.Search.Lucene
                                                     writer.UpdateDocument(
                                                         termFactory(item), 
                                                         item.Item2)), 
-                                                unt => chunkIndexedCallback())))));
+                                                unt => chunkIndexedCallback(length(itemDocuments)))))));
 
                         match(
                             Try(() => { Task.WaitAll(threads.ToArray()); return unit; }),

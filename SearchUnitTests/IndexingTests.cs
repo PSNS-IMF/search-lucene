@@ -78,10 +78,10 @@ namespace SearchUnitTests
                 List(idDocs, create<Tuple<int, Document>>()),
                 action => { action(mockIndexWriter.Object); return unit; },
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
-                () => callBackCount++);
+                count => callBackCount += count);
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
-            Expect(callBackCount, Is.EqualTo(2));
+            Expect(callBackCount, Is.EqualTo(3));
 
             mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
             mockIndexWriter.Verify(w => w.Commit(), Times.Once());
@@ -103,7 +103,7 @@ namespace SearchUnitTests
                 List(idDocs),
                 action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
-                () => { });
+                count => { });
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
 
@@ -124,7 +124,7 @@ namespace SearchUnitTests
                 List(idDocs),
                 action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
-                () => { });
+                count => { });
 
             Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
 
