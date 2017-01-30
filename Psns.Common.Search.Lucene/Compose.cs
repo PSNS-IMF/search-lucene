@@ -60,5 +60,14 @@ namespace Psns.Common.Search.Lucene
                     fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, useWriter)), 
                     termFactory,
                     chunkIndexedCallback);
+
+        /// <summary>
+        /// Increase search speed by reducing index segmentation
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns></returns>
+        public static async Task<Either<Exception, Unit>> optimizeWithLuceneIndexWriterAsync(string directory) =>
+            await optimizeIndexAsync(
+                fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, useWriter)));
     }
 }

@@ -107,13 +107,28 @@ namespace Psns.Common.Search.Lucene
                                                         item.Item2)), 
                                                 unt => chunkIndexedCallback(length(itemDocuments)))))));
 
-                        match(
+                        return match(
                             Try(() => { Task.WaitAll(threads.ToArray()); return unit; }),
                             Succ: ut => writer.Optimize(),
                             Fail: exception => raise<Exception>(exception));
-
-                        return unit;
                     }));
+
+        /// <summary>
+        /// Can be used to increase search speed by reducing the number of segments in an index.
+        /// Should be run during non-peak, index using hours.
+        /// </summary>
+        /// <param name="withIndexWriter"></param>
+        /// <returns></returns>
+        public static async Task<Either<Exception, Unit>> optimizeIndexAsync(
+            Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter) =>
+            await Task.Run(() =>
+                withIndexWriter(writer =>
+                {
+                    return match(
+                        Try(() => { writer.Optimize(); return unit; }),
+                        Succ: ut => { },
+                        Fail: exception => raise<Exception>(exception));
+                }));
 
         static R tee<R>(R val, Action<R> action)
         {

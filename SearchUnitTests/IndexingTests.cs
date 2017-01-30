@@ -132,5 +132,30 @@ namespace SearchUnitTests
             mockIndexWriter.Verify(w => w.Commit(), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
         }
+
+        [Test]
+        public async Task OptimizeIndexAsync_CallsWriterOptimize()
+        {
+            var mockIndexWriter = new Mock<IIndexWriter>();
+
+            var result = await optimizeIndexAsync(
+                action => { action(mockIndexWriter.Object); return unit; });
+
+            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
+
+            mockIndexWriter.Verify(w => w.Optimize(), Times.Once());
+        }
+
+        [Test]
+        public async Task OptimizeIndexAsync_OptimizeThrows_ResultIsException()
+        {
+            var mockIndexWriter = new Mock<IIndexWriter>();
+            mockIndexWriter.Setup(w => w.Optimize()).Throws(new Exception("message"));
+
+            var result = await optimizeIndexAsync(
+                action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action));
+
+            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
+        }
     }
 }
