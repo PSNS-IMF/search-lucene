@@ -10,6 +10,10 @@
     <projectUrl>https://github.com/PSNS-IMF/search-lucene</projectUrl>
     <licenseUrl>https://github.com/PSNS-IMF/search-lucene/blob/master/LICENSE.md</licenseUrl>
     <releaseNotes>
+      ## 1.1.0.7
+      ### Features
+      * Updated to latest logging package
+
       ## 1.1.0.6
       ### Features
       * Add optimizeAsync function
