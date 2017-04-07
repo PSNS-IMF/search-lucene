@@ -10,6 +10,11 @@
     <projectUrl>https://github.com/PSNS-IMF/search-lucene</projectUrl>
     <licenseUrl>https://github.com/PSNS-IMF/search-lucene/blob/master/LICENSE.md</licenseUrl>
     <releaseNotes>
+      ## 1.1.1.1
+      ### Features
+      * Adding constructors to allow other types of Lucene Directories
+      * Remove call to Optimize after index rebuild
+
       ## 1.1.1.0
       ### Features
       * Adding function overloads that require an Analyzer

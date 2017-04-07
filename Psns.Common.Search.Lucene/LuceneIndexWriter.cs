@@ -17,5 +17,8 @@ namespace Psns.Common.Search.Lucene
         /// <param name="maxFieldLength"></param>
         public LuceneIndexWriter(string directory, Analyzer analyzer, MaxFieldLength maxFieldLength)
             : base(FSDirectory.Open(directory), analyzer, maxFieldLength) { }
+
+        public LuceneIndexWriter(Directory directory, Analyzer analyzer, MaxFieldLength maxFieldLength)
+            : base(directory, analyzer, maxFieldLength) { }
     }
 }

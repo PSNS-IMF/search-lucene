@@ -33,6 +33,24 @@ namespace Psns.Common.Search.Lucene
                 Fail: ex => ex);
 
         /// <summary>
+        /// Perform an action using an index writer that will be disposed when finished
+        /// </summary>
+        /// <param name="writerFactory"></param>
+        /// <param name="directory"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        public static Either<Exception, Ret> tryWithIndexWriter<Ret>(
+            Func<IIndexWriter> writerFactory,
+            Directory directory,
+            Func<IIndexWriter, Ret> action) =>
+            match(
+                tryuse(
+                    writerFactory,
+                    writer => action(writer)),
+                Succ: ret => Right<Exception, Ret>(ret),
+                Fail: ex => ex);
+
+        /// <summary>
         /// Map Ts to chunks of Lucene Documents
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -107,10 +125,9 @@ namespace Psns.Common.Search.Lucene
                                                         item.Item2)), 
                                                 unt => chunkIndexedCallback(length(itemDocuments)))))));
 
-                        return match(
-                            Try(() => { Task.WaitAll(threads.ToArray()); return unit; }),
-                            Succ: ut => writer.Optimize(),
-                            Fail: exception => raise<Exception>(exception));
+                        Task.WaitAll(threads.ToArray());
+
+                        return unit;
                     }));
 
         /// <summary>

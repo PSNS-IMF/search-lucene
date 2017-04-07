@@ -68,7 +68,7 @@ namespace SearchUnitTests
         }
 
         [Test]
-        public async Task RebuildSearchIndexAsync_UpdatesAllDocumentsAndCallsOptimize()
+        public async Task RebuildSearchIndexAsync_UpdatesAllDocuments()
         {
             var mockIndexWriter = new Mock<IIndexWriter>();
             var idDocs = List(Tuple(1, new Document()), Tuple(2, new Document()), Tuple(3, new Document()));
@@ -88,7 +88,6 @@ namespace SearchUnitTests
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "2"), It.IsAny<Document>()), Times.Once());
             mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "3"), It.IsAny<Document>()), Times.Once());
-            mockIndexWriter.Verify(w => w.Optimize(), Times.Once());
         }
 
         [Test]
@@ -110,27 +109,6 @@ namespace SearchUnitTests
             mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
             mockIndexWriter.Verify(w => w.Commit(), Times.Once());
             mockIndexWriter.Verify(w => w.Optimize(), Times.Never());
-        }
-
-        [Test]
-        public async Task RebuildSearchIndexAsync_OptimizeThrows_ResultIsException()
-        {
-            var mockIndexWriter = new Mock<IIndexWriter>();
-            mockIndexWriter.Setup(w => w.Optimize()).Throws(new Exception("message"));
-
-            var idDocs = List(Tuple(1, new Document()));
-
-            var result = await rebuildSearchIndexAsync(
-                List(idDocs),
-                action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
-                intDocument => new Term("Id", intDocument.Item1.ToString()),
-                count => { });
-
-            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
-
-            mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
-            mockIndexWriter.Verify(w => w.Commit(), Times.Once());
-            mockIndexWriter.Verify(w => w.UpdateDocument(It.Is<Term>(term => term.Field == "Id" && term.Text == "1"), It.IsAny<Document>()), Times.Once());
         }
 
         [Test]
