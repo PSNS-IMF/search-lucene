@@ -1,6 +1,7 @@
 ﻿using System;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.Search;
 using Lucene.Net.Store;
 
 namespace Psns.Common.Search.Lucene
@@ -13,13 +14,13 @@ namespace Psns.Common.Search.Lucene
         Directory Directory { get; }
 
         int MergeFactor { get; set; }
+        MergeScheduler MergeScheduler { get; }
 
         /// <summary>
-        /// Remove and re-index a Document
+        /// Add a new Document to the Index
         /// </summary>
-        /// <param name="term"></param>
         /// <param name="doc"></param>
-        void UpdateDocument(Term term, Document doc);
+        void AddDocument(Document doc);
 
         /// <summary>
         /// Merges all segments from an array of indexes into this index. 
@@ -35,10 +36,25 @@ namespace Psns.Common.Search.Lucene
         /// <param name="dirs"></param>
         void AddIndexesNoOptimize(params Directory[] dirs);
 
-        void Optimize();
+        void Commit();
+
+        void DeleteDocuments(Query query);
+
+        void DeleteDocuments(params Term[] terms);
 
         void DeleteAll();
 
-        void Commit();
+        void Dispose(bool waitForMerges);
+
+        void Optimize();
+
+        void SetMergeScheduler(MergeScheduler mergeScheduler);
+
+        /// <summary>
+        /// Remove and re-index a Document
+        /// </summary>
+        /// <param name="term"></param>
+        /// <param name="doc"></param>
+        void UpdateDocument(Term term, Document doc);
     }
 }
