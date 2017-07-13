@@ -109,7 +109,7 @@ namespace Psns.Common.Search.Lucene
         /// <returns></returns>
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             string directory,
-            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
                 await rebuildSearchIndexWithLuceneIndexWriterAsync(
@@ -130,7 +130,7 @@ namespace Psns.Common.Search.Lucene
         /// <returns></returns>
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             Directory directory,
-            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
                 await rebuildSearchIndexWithLuceneIndexWriterAsync(
@@ -153,7 +153,7 @@ namespace Psns.Common.Search.Lucene
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             string directory,
             Analyzer analyzer,
-            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
                 await rebuildSearchIndexAsync(
@@ -175,7 +175,7 @@ namespace Psns.Common.Search.Lucene
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             Directory directory,
             Analyzer analyzer,
-            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
                 await rebuildSearchIndexAsync(

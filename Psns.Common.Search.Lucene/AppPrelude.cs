@@ -57,7 +57,7 @@ namespace Psns.Common.Search.Lucene
         /// <param name="items"></param>
         /// <param name="mapItem"></param>
         /// <returns></returns>
-        public static IEnumerable<IEnumerable<Tuple<T, Document>>> mapItems<T>(IEnumerable<T> items, Func<T, Tuple<T, Document>> mapItem) =>
+        public static IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> mapItems<T>(IEnumerable<T> items, Func<T, Tuple<T, ICollection<Document>>> mapItem) =>
             map(items, mapItem).Chunk();
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Psns.Common.Search.Lucene
         /// <param name="withIndexWriter"></param>
         /// <returns></returns>
         public static Either<Exception, Directory> index<T>(
-            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
             Func<Func<IIndexWriter, Directory>, Either<Exception, Directory>> withIndexWriter) =>
             withIndexWriter(
@@ -76,11 +76,21 @@ namespace Psns.Common.Search.Lucene
                 {
                     iter(
                         itemDocumentChunks,
-                        itemDocuments =>
+                        chunk =>
                         {
                             iter(
-                                itemDocuments,
-                                itemDoc => writer.UpdateDocument(termFactory(itemDoc), itemDoc.Item2));
+                                chunk,
+                                itemDocs =>
+                                {
+                                    iter(
+                                        itemDocs.Item2,
+                                        itemDoc =>
+                                        {
+                                            writer.UpdateDocument(
+                                                termFactory(Tuple(itemDocs.Item1, itemDoc)),
+                                                itemDoc);
+                                        });
+                                });
                         });
 
                     return writer.Directory;
@@ -99,7 +109,7 @@ namespace Psns.Common.Search.Lucene
         /// how many documents are in the chunk</param>
         /// <returns>Exception on fail; Unit on success</returns>
         public static async Task<Either<Exception, Unit>> rebuildSearchIndexAsync<T>(
-            IEnumerable<IEnumerable<Tuple<T, Document>>> itemDocumentChunks,
+            IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
@@ -119,10 +129,12 @@ namespace Psns.Common.Search.Lucene
                                             tee(
                                                 iter(
                                                 itemDocuments,
-                                                item => 
-                                                    writer.UpdateDocument(
-                                                        termFactory(item), 
-                                                        item.Item2)), 
+                                                items => 
+                                                {
+                                                    iter(
+                                                        items.Item2, 
+                                                        item => writer.UpdateDocument(termFactory(Tuple(items.Item1, item)), item));
+                                                }),
                                                 unt => chunkIndexedCallback(length(itemDocuments)))))));
 
                         Task.WaitAll(threads.ToArray());

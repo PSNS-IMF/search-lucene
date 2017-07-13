@@ -10,6 +10,7 @@ using Psns.Common.Search.Lucene;
 using static LanguageExt.List;
 using static LanguageExt.Prelude;
 using static Psns.Common.Search.Lucene.AppPrelude;
+using System.Collections.Generic;
 
 namespace SearchUnitTests
 {
@@ -19,7 +20,7 @@ namespace SearchUnitTests
         [Test]
         public void MapItems_AppliesMappingFunctionAndChunks()
         {
-            var documentChunks = mapItems(Range(1, 1000), i => Tuple(i, new Document()));
+            var documentChunks = mapItems(Range(1, 1000), i => Tuple(i, new List<Document>() as ICollection<Document>));
 
             Expect(documentChunks.Count(), EqualTo(2));
 
@@ -60,7 +61,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
 
             var result = index(
-                List(List(Tuple(1, new Document()))),
+                List(List(Tuple(1, new List<Document> { new Document() } as ICollection<Document>))),
                 doc => new Term("Id"),
                 action => { action(mockWriter.Object); return new RAMDirectory(); });
 
@@ -71,11 +72,14 @@ namespace SearchUnitTests
         public async Task RebuildSearchIndexAsync_UpdatesAllDocuments()
         {
             var mockIndexWriter = new Mock<IIndexWriter>();
-            var idDocs = List(Tuple(1, new Document()), Tuple(2, new Document()), Tuple(3, new Document()));
+            var idDocs = List(
+                Tuple(1, new List<Document> { new Document() } as ICollection<Document>), 
+                Tuple(2, new List<Document> { new Document() } as ICollection<Document>),
+                Tuple(3, new List<Document> { new Document() } as ICollection<Document>));
             var callBackCount = 0;
 
             var result = await rebuildSearchIndexAsync(
-                List(idDocs, create<Tuple<int, Document>>()),
+                List(idDocs, create<Tuple<int, ICollection<Document>>>()),
                 action => { action(mockIndexWriter.Object); return unit; },
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
                 count => callBackCount += count);
@@ -96,7 +100,7 @@ namespace SearchUnitTests
             var mockIndexWriter = new Mock<IIndexWriter>();
             mockIndexWriter.Setup(w => w.UpdateDocument(It.IsAny<Term>(), It.IsAny<Document>())).Throws(new Exception("message"));
 
-            var idDocs = List(Tuple(1, new Document()));
+            var idDocs = List(Tuple(1, new List<Document> { new Document() } as ICollection<Document>));
 
             var result = await rebuildSearchIndexAsync(
                 List(idDocs),
