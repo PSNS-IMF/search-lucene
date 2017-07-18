@@ -10,6 +10,10 @@
     <projectUrl>https://github.com/PSNS-IMF/search-lucene</projectUrl>
     <licenseUrl>https://github.com/PSNS-IMF/search-lucene/blob/master/LICENSE.md</licenseUrl>
     <releaseNotes>
+      ## 1.1.1.4
+      ### Features
+      * Updated methods to handle multiple parts per task to be indexed, to handle cases such as task subrecords (table valued attributes)
+      
       ## 1.1.1.3
       ### Features
       * Expose more methods to LuceneIndexWriter
