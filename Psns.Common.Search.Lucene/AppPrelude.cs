@@ -69,7 +69,8 @@ namespace Psns.Common.Search.Lucene
         /// <returns></returns>
         public static Either<Exception, Directory> index<T>(
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
-            Func<Tuple<T, Document>, Term> termFactory,
+            Func<Tuple<T, Document>, Term> updateTermFactory,
+            Func<T, Term> deleteTermFactory,
             Func<Func<IIndexWriter, Directory>, Either<Exception, Directory>> withIndexWriter) =>
             withIndexWriter(
                 writer =>
@@ -78,16 +79,22 @@ namespace Psns.Common.Search.Lucene
                         itemDocumentChunks,
                         chunk =>
                         {
+                            // iterate through all documents
                             iter(
                                 chunk,
                                 itemDocs =>
                                 {
+                                    // Delete documents from the index, only if an id factory is supplied
+                                    if (deleteTermFactory != null)
+                                        writer.DeleteDocuments(deleteTermFactory(itemDocs.Item1));
+
+                                    // iterate through a single document's parts
                                     iter(
                                         itemDocs.Item2,
                                         itemDoc =>
                                         {
                                             writer.UpdateDocument(
-                                                termFactory(Tuple(itemDocs.Item1, itemDoc)),
+                                                updateTermFactory(Tuple(itemDocs.Item1, itemDoc)),
                                                 itemDoc);
                                         });
                                 });

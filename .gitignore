@@ -278,3 +278,4 @@ build/
 #HP Fortify Files
 
 *.fpr
+/nuget.exe

@@ -61,11 +61,13 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
 
             var result = index(
-                List(List(Tuple(1, new List<Document> { new Document() } as ICollection<Document>))),
+                List(List(Tuple(1, new List<Document> { new Document(), new Document() } as ICollection<Document>))),
                 doc => new Term("Id"),
+                item => new Term("__TaskId"),
                 action => { action(mockWriter.Object); return new RAMDirectory(); });
 
-            mockWriter.Verify(w => w.UpdateDocument(It.Is<Term>(t => t.Field == "Id"), It.IsAny<Document>()), Times.Once());
+            mockWriter.Verify(w => w.UpdateDocument(It.Is<Term>(t => t.Field == "Id"), It.IsAny<Document>()), Times.Exactly(2));
+            mockWriter.Verify(w => w.DeleteDocuments(It.Is<Term>(t => t.Field == "__TaskId")), Times.Once());
         }
 
         [Test]
