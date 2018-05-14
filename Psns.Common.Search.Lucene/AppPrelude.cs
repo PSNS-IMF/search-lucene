@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Lucene.Net.Documents;
+using Lucene.Net.Index;
+using Lucene.Net.Store;
+using Psns.Common.Functional;
+using Psns.Common.SystemExtensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using LanguageExt;
-using Lucene.Net.Documents;
-using Lucene.Net.Index;
-using Lucene.Net.Store;
-using Psns.Common.SystemExtensions;
-using static LanguageExt.List;
-using static LanguageExt.Prelude;
+using static Psns.Common.Functional.Prelude;
 
 namespace Psns.Common.Search.Lucene
 {
@@ -25,12 +24,12 @@ namespace Psns.Common.Search.Lucene
             Func<IIndexWriter> writerFactory,
             string directory,
             Func<IIndexWriter, Ret> action) =>
-            match(
-                tryuse(
+                TryUse(
                     writerFactory,
-                    writer => action(writer)),
-                Succ: ret => Right<Exception, Ret>(ret),
-                Fail: ex => ex);
+                    writer => action(writer))
+                .Match(
+                    success: ret => Right<Exception, Ret>(ret),
+                    fail: ex => ex);
 
         /// <summary>
         /// Perform an action using an index writer that will be disposed when finished
@@ -43,62 +42,62 @@ namespace Psns.Common.Search.Lucene
             Func<IIndexWriter> writerFactory,
             Directory directory,
             Func<IIndexWriter, Ret> action) =>
-            match(
-                tryuse(
+                TryUse(
                     writerFactory,
-                    writer => action(writer)),
-                Succ: ret => Right<Exception, Ret>(ret),
-                Fail: ex => ex);
+                    writer => action(writer))
+                .Match(
+                    success: ret => Right<Exception, Ret>(ret),
+                    fail: ex => ex);
 
         /// <summary>
-        /// Map Ts to chunks of Lucene Documents
+        /// Map <typeparamref name="T"/>s to chunks of <see cref="Document"/>s.
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="items"></param>
-        /// <param name="mapItem"></param>
+        /// <param name="self"></param>
+        /// <param name="mapper"></param>
         /// <returns></returns>
-        public static IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> mapItems<T>(IEnumerable<T> items, Func<T, Tuple<T, ICollection<Document>>> mapItem) =>
-            map(items, mapItem).Chunk();
+        public static IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> MapToChunks<T>(
+            this IEnumerable<T> self,
+            Func<T, Tuple<T, ICollection<Document>>> mapper) =>
+                self.Select(mapper).Chunk();
 
         /// <summary>
         /// Index and commit documents
         /// </summary>
         /// <param name="itemDocumentChunks"></param>
-        /// <param name="termFactory"></param>
+        /// <param name="updateTermFactory"></param>
+        /// <param name="deleteTermFactory"></param>
         /// <param name="withIndexWriter"></param>
         /// <returns></returns>
         public static Either<Exception, Directory> index<T>(
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
-            Func<Tuple<T, Document>, Term> updateTermFactory,
+            Func<Tuple<T, Document>, Term> updateTermFactory,   
             Func<T, Term> deleteTermFactory,
             Func<Func<IIndexWriter, Directory>, Either<Exception, Directory>> withIndexWriter) =>
             withIndexWriter(
                 writer =>
                 {
-                    iter(
-                        itemDocumentChunks,
-                        chunk =>
-                        {
-                            // iterate through all documents
-                            iter(
-                                chunk,
-                                itemDocs =>
-                                {
-                                    // Delete documents from the index, only if an id factory is supplied
-                                    if (deleteTermFactory != null)
-                                        writer.DeleteDocuments(deleteTermFactory(itemDocs.Item1));
+                        itemDocumentChunks.Iter(
+                            chunk =>
+                            {
+                                // iterate through all documents
+                                chunk.Iter(
+                                    itemDocs =>
+                                    {
+                                        // Delete documents from the index, only if an id factory is supplied
+                                        if (deleteTermFactory != null)
+                                            writer.DeleteDocuments(deleteTermFactory(itemDocs.Item1));
 
-                                    // iterate through a single document's parts
-                                    iter(
-                                        itemDocs.Item2,
-                                        itemDoc =>
-                                        {
-                                            writer.UpdateDocument(
-                                                updateTermFactory(Tuple(itemDocs.Item1, itemDoc)),
-                                                itemDoc);
-                                        });
-                                });
-                        });
+                                        // iterate through a single document's parts
+                                        itemDocs.Item2.Iter(
+                                            itemDoc =>
+                                            {
+                                                writer.UpdateDocument(
+                                                    updateTermFactory(Tuple(itemDocs.Item1, itemDoc)),
+                                                    itemDoc);
+                                            });
+                                    });
+                            });
 
                     return writer.Directory;
                 });
@@ -114,10 +113,10 @@ namespace Psns.Common.Search.Lucene
         /// <param name="termFactory">Term generator</param>
         /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
         /// how many documents are in the chunk</param>
-        /// <returns>Exception on fail; Unit on success</returns>
-        public static async Task<Either<Exception, Unit>> rebuildSearchIndexAsync<T>(
+        /// <returns>Exception on fail; UnitValue on success</returns>
+        public static async Task<Either<Exception, UnitValue>> rebuildSearchIndexAsync<T>(
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
-            Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter,
+            Func<Func<IIndexWriter, UnitValue>, Either<Exception, UnitValue>> withIndexWriter,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
                 await Task.Run(() => 
@@ -126,27 +125,27 @@ namespace Psns.Common.Search.Lucene
                         writer.DeleteAll();
                         writer.Commit();
 
-                        var threads = fold(
-                            itemDocumentChunks,
-                            List<Task>(),
+                        var threads = itemDocumentChunks.Aggregate(
+                            new List<Task>(),
                             (state, itemDocuments) =>
-                                state = state.Add(
+                            {
+                                state.Add(
                                     Task.Factory.StartNew(
                                         (() =>
-                                            tee(
-                                                iter(
-                                                itemDocuments,
-                                                items => 
-                                                {
-                                                    iter(
-                                                        items.Item2, 
-                                                        item => writer.UpdateDocument(termFactory(Tuple(items.Item1, item)), item));
-                                                }),
-                                                unt => chunkIndexedCallback(length(itemDocuments)))))));
+                                                itemDocuments.Iter(
+                                                    items =>
+                                                    {
+                                                        items.Item2.Iter(
+                                                            item => writer.UpdateDocument(termFactory(Tuple(items.Item1, item)), item));
+                                                    })
+                                                .Tap(unt => chunkIndexedCallback(itemDocuments.Count())))));
+
+                                return state;
+                            });
 
                         Task.WaitAll(threads.ToArray());
 
-                        return unit;
+                        return Unit;
                     }));
 
         /// <summary>
@@ -155,21 +154,14 @@ namespace Psns.Common.Search.Lucene
         /// </summary>
         /// <param name="withIndexWriter"></param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> optimizeIndexAsync(
-            Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter) =>
+        public static async Task<Either<Exception, UnitValue>> optimizeIndexAsync(
+            Func<Func<IIndexWriter, UnitValue>, Either<Exception, UnitValue>> withIndexWriter) =>
             await Task.Run(() =>
                 withIndexWriter(writer =>
                 {
-                    return match(
-                        Try(() => { writer.Optimize(); return unit; }),
-                        Succ: ut => { },
-                        Fail: exception => raise<Exception>(exception));
+                    return Try(() => { writer.Optimize(); return Unit; }).Match(
+                        success: ut => { },
+                        fail: exception => raise<UnitValue>(exception));
                 }));
-
-        static R tee<R>(R val, Action<R> action)
-        {
-            action(val);
-            return val;
-        }
     }
 }

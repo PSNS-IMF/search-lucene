@@ -1,16 +1,16 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Lucene.Net.Documents;
+﻿using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Moq;
 using NUnit.Framework;
 using Psns.Common.Search.Lucene;
-using static LanguageExt.List;
-using static LanguageExt.Prelude;
-using static Psns.Common.Search.Lucene.AppPrelude;
+using Psns.Common.SystemExtensions;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using static Psns.Common.Functional.Prelude;
+using static Psns.Common.Search.Lucene.AppPrelude;
 
 namespace SearchUnitTests
 {
@@ -20,13 +20,11 @@ namespace SearchUnitTests
         [Test]
         public void MapItems_AppliesMappingFunctionAndChunks()
         {
-            var documentChunks = mapItems(Range(1, 1000), i => Tuple(i, new List<Document>() as ICollection<Document>));
+            var documentChunks = Enumerable.Range(1, 1000).MapToChunks(i => Tuple(i, new List<Document>() as ICollection<Document>));
 
             Expect(documentChunks.Count(), EqualTo(2));
 
-            iter(
-                documentChunks,
-                chunk => Expect(chunk.Count(), EqualTo(500)));
+            documentChunks.Iter(chunk => Expect(chunk.Count(), EqualTo(500)));
         }
 
         [Test]
@@ -36,9 +34,9 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
             mockWriter.Setup(w => w.Directory).Returns(new RAMDirectory());
 
-            var result = tryWithIndexWriter(() => mockWriter.Object, "directory", writer => { called = true; return unit; });
+            var result = tryWithIndexWriter(() => mockWriter.Object, "directory", writer => { called = true; return Unit; });
 
-            Expect(match(result, dir => "ok", ex => "failed"), Is.EqualTo("ok"));
+            Expect(result.Match(dir => "ok", ex => "failed"), Is.EqualTo("ok"));
             Expect(called, Is.True);
         }
 
@@ -49,9 +47,9 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
             mockWriter.Setup(w => w.Directory).Returns(new RAMDirectory());
 
-            var result = tryWithIndexWriter(() => failwith<IIndexWriter>("error"), "directory", writer => { called = true; return unit; });
+            var result = tryWithIndexWriter(() => failwith<IIndexWriter>("error"), "directory", writer => { called = true; return Unit; });
 
-            Expect(match(result, dir => "ok", ex => ex.Message), Is.EqualTo("error"));
+            Expect(result.Match(dir => "ok", ex => ex.Message), Is.EqualTo("error"));
             Expect(called, Is.False);
         }
 
@@ -61,7 +59,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
 
             var result = index(
-                List(List(Tuple(1, new List<Document> { new Document(), new Document() } as ICollection<Document>))),
+                Cons(Cons(Tuple(1, new List<Document> { new Document(), new Document() } as ICollection<Document>))),
                 doc => new Term("Id"),
                 item => new Term("__TaskId"),
                 action => { action(mockWriter.Object); return new RAMDirectory(); });
@@ -74,19 +72,19 @@ namespace SearchUnitTests
         public async Task RebuildSearchIndexAsync_UpdatesAllDocuments()
         {
             var mockIndexWriter = new Mock<IIndexWriter>();
-            var idDocs = List(
+            var idDocs = Cons(
                 Tuple(1, new List<Document> { new Document() } as ICollection<Document>), 
                 Tuple(2, new List<Document> { new Document() } as ICollection<Document>),
                 Tuple(3, new List<Document> { new Document() } as ICollection<Document>));
             var callBackCount = 0;
 
             var result = await rebuildSearchIndexAsync(
-                List(idDocs, create<Tuple<int, ICollection<Document>>>()),
-                action => { action(mockIndexWriter.Object); return unit; },
+                Cons(idDocs, Enumerable.Empty<Tuple<int, ICollection<Document>>>()),
+                action => { action(mockIndexWriter.Object); return Unit; },
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
                 count => callBackCount += count);
 
-            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
+            Expect(result.Match(Unit => "ok", ex => "fail"), Is.EqualTo("ok"));
             Expect(callBackCount, Is.EqualTo(3));
 
             mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
@@ -102,15 +100,15 @@ namespace SearchUnitTests
             var mockIndexWriter = new Mock<IIndexWriter>();
             mockIndexWriter.Setup(w => w.UpdateDocument(It.IsAny<Term>(), It.IsAny<Document>())).Throws(new Exception("message"));
 
-            var idDocs = List(Tuple(1, new List<Document> { new Document() } as ICollection<Document>));
+            var idDocs = Cons(Tuple(1, new List<Document> { new Document() } as ICollection<Document>));
 
             var result = await rebuildSearchIndexAsync(
-                List(idDocs),
+                Cons(idDocs),
                 action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action),
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
                 count => { });
 
-            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
+            Expect(result.Match(right: Unit => "ok", left: ex => "fail"), Is.EqualTo("fail"));
 
             mockIndexWriter.Verify(w => w.DeleteAll(), Times.Once());
             mockIndexWriter.Verify(w => w.Commit(), Times.Once());
@@ -123,9 +121,9 @@ namespace SearchUnitTests
             var mockIndexWriter = new Mock<IIndexWriter>();
 
             var result = await optimizeIndexAsync(
-                action => { action(mockIndexWriter.Object); return unit; });
+                action => { action(mockIndexWriter.Object); return Unit; });
 
-            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("ok"));
+            Expect(result.Match(right: Unit => "ok", left: ex => "fail"), Is.EqualTo("ok"));
 
             mockIndexWriter.Verify(w => w.Optimize(), Times.Once());
         }
@@ -139,7 +137,7 @@ namespace SearchUnitTests
             var result = await optimizeIndexAsync(
                 action => tryWithIndexWriter(() => mockIndexWriter.Object, "", action));
 
-            Expect(match(result, Right: unit => "ok", Left: ex => "fail"), Is.EqualTo("fail"));
+            Expect(result.Match(right: Unit => "ok", left: ex => "fail"), Is.EqualTo("fail"));
         }
     }
 }

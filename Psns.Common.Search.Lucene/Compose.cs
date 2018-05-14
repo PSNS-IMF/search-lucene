@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using LanguageExt;
-using Lucene.Net.Analysis;
+﻿using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
-using static LanguageExt.Prelude;
+using Psns.Common.Functional;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using static Psns.Common.Functional.Prelude;
 
 namespace Psns.Common.Search.Lucene
 {
@@ -52,12 +52,12 @@ namespace Psns.Common.Search.Lucene
         /// Set MaxClauseCount to 4096 and FIPSCompliant to true
         /// </summary>
         /// <returns></returns>
-        public static Unit initializeLucene()
+        public static UnitValue initializeLucene()
         {
             BooleanQuery.MaxClauseCount = 4096;
             Cryptography.FIPSCompliant = true;
 
-            return unit;
+            return Unit;
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace Psns.Common.Search.Lucene
         /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
         /// how many documents are in the chunk</param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
+        public static async Task<Either<Exception, UnitValue>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             string directory,
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
@@ -128,7 +128,7 @@ namespace Psns.Common.Search.Lucene
         /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
         /// how many documents are in the chunk</param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
+        public static async Task<Either<Exception, UnitValue>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             Directory directory,
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
             Func<Tuple<T, Document>, Term> termFactory,
@@ -150,7 +150,7 @@ namespace Psns.Common.Search.Lucene
         /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
         /// how many documents are in the chunk</param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
+        public static async Task<Either<Exception, UnitValue>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             string directory,
             Analyzer analyzer,
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
@@ -158,7 +158,7 @@ namespace Psns.Common.Search.Lucene
             Action<int> chunkIndexedCallback) =>
                 await rebuildSearchIndexAsync(
                     itemDocumentChunks,
-                    fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, analyzer, useWriter)),
+                    fun((Func<IIndexWriter, UnitValue> useWriter) => tryWithLuceneIndexWriter(directory, analyzer, useWriter)),
                     termFactory,
                     chunkIndexedCallback);
 
@@ -172,7 +172,7 @@ namespace Psns.Common.Search.Lucene
         /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
         /// how many documents are in the chunk</param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
+        public static async Task<Either<Exception, UnitValue>> rebuildSearchIndexWithLuceneIndexWriterAsync<T>(
             Directory directory,
             Analyzer analyzer,
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
@@ -180,7 +180,7 @@ namespace Psns.Common.Search.Lucene
             Action<int> chunkIndexedCallback) =>
                 await rebuildSearchIndexAsync(
                     itemDocumentChunks,
-                    fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, analyzer, useWriter)),
+                    fun((Func<IIndexWriter, UnitValue> useWriter) => tryWithLuceneIndexWriter(directory, analyzer, useWriter)),
                     termFactory,
                     chunkIndexedCallback);
 
@@ -189,7 +189,7 @@ namespace Psns.Common.Search.Lucene
         /// </summary>
         /// <param name="directory">The directory where the index is stored</param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> optimizeWithLuceneIndexWriterAsync(string directory) =>
+        public static async Task<Either<Exception, UnitValue>> optimizeWithLuceneIndexWriterAsync(string directory) =>
             await optimizeWithLuceneIndexWriterAsync(directory, new LowerCaseKeyWordAnalyzer());
 
         /// <summary>
@@ -198,8 +198,8 @@ namespace Psns.Common.Search.Lucene
         /// <param name="directory">The directory where the index is stored</param>
         /// <param name="analyzer">An analyzer to use for converting text into search terms</param>
         /// <returns></returns>
-        public static async Task<Either<Exception, Unit>> optimizeWithLuceneIndexWriterAsync(string directory, Analyzer analyzer) =>
+        public static async Task<Either<Exception, UnitValue>> optimizeWithLuceneIndexWriterAsync(string directory, Analyzer analyzer) =>
             await optimizeIndexAsync(
-                fun((Func<IIndexWriter, Unit> useWriter) => tryWithLuceneIndexWriter(directory, analyzer, useWriter)));
+                fun((Func<IIndexWriter, UnitValue> useWriter) => tryWithLuceneIndexWriter(directory, analyzer, useWriter)));
     }
 }
