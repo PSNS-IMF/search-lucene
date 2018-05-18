@@ -10,6 +10,10 @@
     <projectUrl>https://github.com/PSNS-IMF/search-lucene</projectUrl>
     <licenseUrl>https://github.com/PSNS-IMF/search-lucene/blob/master/LICENSE.md</licenseUrl>
     <releaseNotes>
+      ## 2.0.0.1
+      ### Features
+      * Updating dependencies
+
       ## 2.0.0.0
       ### Features
       * Updated to latest Psns.Common.SystemExtensions
@@ -80,7 +84,7 @@
     <tags>PSNS Lucene Search</tags>
     <dependencies>
       <dependency id="Lucene.Net" version="3.0.3" />
-      <dependency id="Psns.Common.SystemExtensions" version="2018.5.14.1" />
+      <dependency id="Psns.Common.SystemExtensions" version="2018.5.16.1" />
     </dependencies>
   </metadata>
   <files>
