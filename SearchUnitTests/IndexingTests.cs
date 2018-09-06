@@ -34,7 +34,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
             mockWriter.Setup(w => w.Directory).Returns(new RAMDirectory());
 
-            var result = tryWithIndexWriter(() => mockWriter.Object, "directory", writer => { called = true; return Unit; });
+            var result = tryWithIndexWriter(() => mockWriter.Object, "directory", writer => { called = true; return unit; });
 
             Expect(result.Match(dir => "ok", ex => "failed"), Is.EqualTo("ok"));
             Expect(called, Is.True);
@@ -47,7 +47,7 @@ namespace SearchUnitTests
             var mockWriter = new Mock<IIndexWriter>();
             mockWriter.Setup(w => w.Directory).Returns(new RAMDirectory());
 
-            var result = tryWithIndexWriter(() => failwith<IIndexWriter>("error"), "directory", writer => { called = true; return Unit; });
+            var result = tryWithIndexWriter(() => failwith<IIndexWriter>("error"), "directory", writer => { called = true; return unit; });
 
             Expect(result.Match(dir => "ok", ex => ex.Message), Is.EqualTo("error"));
             Expect(called, Is.False);
@@ -80,7 +80,7 @@ namespace SearchUnitTests
 
             var result = await rebuildSearchIndexAsync(
                 Cons(idDocs, Enumerable.Empty<Tuple<int, ICollection<Document>>>()),
-                action => { action(mockIndexWriter.Object); return Unit; },
+                action => { action(mockIndexWriter.Object); return unit; },
                 intDocument => new Term("Id", intDocument.Item1.ToString()),
                 count => callBackCount += count);
 
@@ -121,7 +121,7 @@ namespace SearchUnitTests
             var mockIndexWriter = new Mock<IIndexWriter>();
 
             var result = await optimizeIndexAsync(
-                action => { action(mockIndexWriter.Object); return Unit; });
+                action => { action(mockIndexWriter.Object); return unit; });
 
             Expect(result.Match(right: Unit => "ok", left: ex => "fail"), Is.EqualTo("ok"));
 

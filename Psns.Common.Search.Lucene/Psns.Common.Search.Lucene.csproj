@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net45;net451;net452;net46</TargetFrameworks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <AssemblyVersion>2.0.0.1</AssemblyVersion>
-    <FileVersion>2.0.0.1</FileVersion>
+    <AssemblyVersion>2.0.0.2</AssemblyVersion>
+    <FileVersion>2.0.0.2</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -12,7 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Psns.Common.SystemExtensions" Version="2018.5.16.1" />
+    <PackageReference Include="Psns.Common.Functional" Version="2018.8.6.1" />
+    <PackageReference Include="Psns.Common.SystemExtensions" Version="2018.8.8.1" />
     <PackageReference Include="Lucene.Net" Version="3.0.3" />
   </ItemGroup>
   

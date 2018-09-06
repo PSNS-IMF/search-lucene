@@ -114,9 +114,9 @@ namespace Psns.Common.Search.Lucene
         /// <param name="chunkIndexedCallback">Will be called after each chunk is indexed providing a count of 
         /// how many documents are in the chunk</param>
         /// <returns>Exception on fail; UnitValue on success</returns>
-        public static async Task<Either<Exception, UnitValue>> rebuildSearchIndexAsync<T>(
+        public static async Task<Either<Exception, Unit>> rebuildSearchIndexAsync<T>(
             IEnumerable<IEnumerable<Tuple<T, ICollection<Document>>>> itemDocumentChunks,
-            Func<Func<IIndexWriter, UnitValue>, Either<Exception, UnitValue>> withIndexWriter,
+            Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter,
             Func<Tuple<T, Document>, Term> termFactory,
             Action<int> chunkIndexedCallback) =>
                 await Task.Run(() => 
@@ -145,7 +145,7 @@ namespace Psns.Common.Search.Lucene
 
                         Task.WaitAll(threads.ToArray());
 
-                        return Unit;
+                        return unit;
                     }));
 
         /// <summary>
@@ -154,14 +154,14 @@ namespace Psns.Common.Search.Lucene
         /// </summary>
         /// <param name="withIndexWriter"></param>
         /// <returns></returns>
-        public static async Task<Either<Exception, UnitValue>> optimizeIndexAsync(
-            Func<Func<IIndexWriter, UnitValue>, Either<Exception, UnitValue>> withIndexWriter) =>
+        public static async Task<Either<Exception, Unit>> optimizeIndexAsync(
+            Func<Func<IIndexWriter, Unit>, Either<Exception, Unit>> withIndexWriter) =>
             await Task.Run(() =>
                 withIndexWriter(writer =>
                 {
-                    return Try(() => { writer.Optimize(); return Unit; }).Match(
+                    return Try(() => { writer.Optimize(); return unit; }).Match(
                         success: ut => { },
-                        fail: exception => raise<UnitValue>(exception));
+                        fail: exception => raise<Unit>(exception));
                 }));
     }
 }
