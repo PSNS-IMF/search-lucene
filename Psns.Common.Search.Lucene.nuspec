@@ -88,7 +88,7 @@
     <tags>PSNS Lucene Search</tags>
     <dependencies>
       <dependency id="Lucene.Net" version="3.0.3" />
-      <dependency id="Psns.Common.SystemExtensions" version="2018.8.8.6" />
+      <dependency id="Psns.Common.SystemExtensions" version="2018.8.8.1" />
       <dependency id="Psns.Common.Functional" version="2018.8.6.1" />
     </dependencies>
   </metadata>
